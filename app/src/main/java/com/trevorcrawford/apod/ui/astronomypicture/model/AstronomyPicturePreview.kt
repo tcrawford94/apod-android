@@ -1,13 +1,9 @@
 package com.trevorcrawford.apod.ui.astronomypicture.model
 
-import java.time.format.DateTimeFormatter
+import java.time.LocalDate
 
-data class AstronomyPicturePreview (
+data class AstronomyPicturePreview(
     val title: String,
-    val subTitle: String,
+    val date: LocalDate,
     val thumbnailUrl: String
-) {
-    companion object {
-        private val monthDayYearFormat = DateTimeFormatter.ofPattern("MM/dd/yyyy")
-    }
-}
+)

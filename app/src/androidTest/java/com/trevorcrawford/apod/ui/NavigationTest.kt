@@ -20,7 +20,7 @@ class NavigationTest {
     @Test
     fun test1() {
         // TODO: Add navigation tests
-        composeTestRule.onNodeWithText(fakeAstronomyPictures.first(), substring = true).assertExists()
+        composeTestRule.onNodeWithText(fakeAstronomyPictures.first().title, substring = true).assertExists()
     }
 }
 

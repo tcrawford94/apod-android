@@ -16,7 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -28,6 +27,9 @@ import com.trevorcrawford.apod.R
 import com.trevorcrawford.apod.ui.astronomypicture.model.AstronomyPicturePreview
 import com.trevorcrawford.apod.ui.theme.ApodIcons
 import com.trevorcrawford.apod.ui.theme.ApodTheme
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 @OptIn(ExperimentalLifecycleComposeApi::class)
 @Composable
@@ -35,36 +37,43 @@ fun AstronomyPictureScreen(
     modifier: Modifier = Modifier,
     viewModel: AstronomyPictureViewModel = hiltViewModel()
 ) {
-    val items by viewModel.uiState.collectAsStateWithLifecycle()
-    if (items is AstronomyPictureUiState.Success) {
-        AstronomyPictureScreen(
-            items = (items as AstronomyPictureUiState.Success).data,
-            //onSave = viewModel::addAstronomyPicture,
-            modifier = modifier
-        )
-    }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    AstronomyPictureScreen(
+        uiState = uiState,
+        onChangeSortClick = viewModel::changeSortOption,
+        modifier = modifier
+    )
 }
 
 @Composable
 internal fun AstronomyPictureScreen(
-    items: List<AstronomyPicturePreview>,
+    uiState: AstronomyPictureUiState,
+    onChangeSortClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
         color = MaterialTheme.colorScheme.background,
         modifier = modifier
     ) {
-        ApodList(
-            list = items,
-            sortOrderDescription = "todo",
-            onChangeSortClick = { /*TODO*/ }
-        )
+        when (uiState) {
+            is AstronomyPictureUiState.Data -> {
+                ApodList(
+                    previewList = uiState.previewList,
+                    sortOrderDescription = stringResource(id = uiState.sortOrderRes),
+                    onChangeSortClick = onChangeSortClick
+                )
+            }
+            else -> {
+                Text("UiState is not Success")
+            }
+        }
+
     }
 }
 
 @Composable
-fun ApodList(
-    list: List<AstronomyPicturePreview>,
+private fun ApodList(
+    previewList: List<AstronomyPicturePreview>,
     sortOrderDescription: String,
     onChangeSortClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -80,16 +89,8 @@ fun ApodList(
                 bottom = gradientHeight
             )
         ) {
-            item {
-                Text(
-                    text = stringResource(R.string.sorted_by, sortOrderDescription),
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            items(list) { preview ->
-                ApodPreviewItem(
+            items(previewList) { preview ->
+                ApodPreviewRow(
                     preview,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -112,6 +113,7 @@ fun ApodList(
                 )
         )
         SortFAB(
+            sortOrderDescription = sortOrderDescription,
             onClick = onChangeSortClick,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -121,7 +123,7 @@ fun ApodList(
 }
 
 @Composable
-fun ApodPreviewItem(
+private fun ApodPreviewRow(
     uiState: AstronomyPicturePreview,
     modifier: Modifier = Modifier
 ) {
@@ -136,23 +138,25 @@ fun ApodPreviewItem(
             AsyncImage(
                 model = uiState.thumbnailUrl,
                 modifier = Modifier
-                    .size(80.dp)
-                    .padding(16.dp)
+                    .size(100.dp)
+                    .padding(12.dp)
                     .clip(RoundedCornerShape(4.dp)),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 placeholder = rememberVectorPainter(image = ApodIcons.Stars)
             )
             Column(
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(top = 12.dp, bottom = 12.dp, end = 12.dp)
             ) {
                 Text(
                     text = uiState.title,
                     overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 2
                 )
                 Text(
-                    text = uiState.subTitle,
+                    text = LongDateFormatter.format(uiState.date),
                     modifier = Modifier.paddingFromBaseline(16.dp),
                     style = MaterialTheme.typography.labelSmall
                 )
@@ -162,7 +166,8 @@ fun ApodPreviewItem(
 }
 
 @Composable
-fun SortFAB(
+private fun SortFAB(
+    sortOrderDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -178,26 +183,39 @@ fun SortFAB(
         ) {
             Icon(imageVector = ApodIcons.Sort, contentDescription = null)
             Text(
-                text = stringResource(id = R.string.reorder_list),
+                text = stringResource(R.string.sorted_by, sortOrderDescription),
                 modifier = Modifier.padding(start = 4.dp)
             )
         }
     }
 }
 
+private val LongDateFormatter by lazy {
+    DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)
+}
+
 // Previews
+@Preview(showBackground = true, widthDp = 375)
+@Composable
+private fun RowPreview() {
+    ApodTheme {
+        ApodPreviewRow(
+            uiState = testPreviews[1],
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
 @Preview(showBackground = true, widthDp = 375, heightDp = 875)
 @Composable
 private fun PortraitPreview() {
     ApodTheme {
         AstronomyPictureScreen(
-            items = listOf(
-                AstronomyPicturePreview(
-                    title = "The Milky Way",
-                    subTitle = "2022-10-23",
-                    thumbnailUrl = "https://apod.nasa.gov/apod/image/0712/ic1396_wood.jpg",
-                )
-            )
+            uiState = AstronomyPictureUiState.Data(
+                previewList = testPreviews,
+                sortOrderRes = R.string.title
+            ),
+            onChangeSortClick = {}
         )
     }
 }
@@ -207,13 +225,29 @@ private fun PortraitPreview() {
 private fun LandscapePreview() {
     ApodTheme {
         AstronomyPictureScreen(
-            items = listOf(
-                AstronomyPicturePreview(
-                    title = "The Milky Way",
-                    subTitle = "2022-10-23",
-                    thumbnailUrl = "https://apod.nasa.gov/apod/image/0712/ic1396_wood.jpg",
-                )
-            )
+            uiState = AstronomyPictureUiState.Data(
+                previewList = testPreviews,
+                sortOrderRes = R.string.date
+            ),
+            onChangeSortClick = {}
         )
     }
 }
+
+private val testPreviews = listOf(
+    AstronomyPicturePreview(
+        title = "The Milky Way",
+        date = LocalDate.now(),
+        thumbnailUrl = "https://apod.nasa.gov/apod/image/0712/ic1396_wood.jpg",
+    ),
+    AstronomyPicturePreview(
+        title = "Orion's Belt Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
+        date = LocalDate.MIN,
+        thumbnailUrl = "https://apod.nasa.gov/apod/image/0712/ic1396_wood.jpg",
+    ),
+    AstronomyPicturePreview(
+        title = "Full Moon",
+        date = LocalDate.MAX,
+        thumbnailUrl = "https://apod.nasa.gov/apod/image/0712/ic1396_wood.jpg",
+    )
+)

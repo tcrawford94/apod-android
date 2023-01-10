@@ -27,13 +27,19 @@ android {
         ksp {
             arg("room.schemaLocation", "$projectDir/schemas")
         }
+
+        buildConfigField("String", "NASA_BASE_URL", "\"https://api.nasa.gov\"")
+        buildConfigField("String", "API_KEY", "\"qzZJEkX6bxc2ac1VeN2VYbMaNlg5mByiIFuofXtE\"")
     }
 
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 
@@ -49,7 +55,7 @@ android {
     buildFeatures {
         compose = true
         aidl = false
-        buildConfig = false
+        buildConfig = true
         renderScript = false
         shaders = false
     }
@@ -111,5 +117,9 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)
 
-    implementation(libs.coil)
+    implementation(libs.coil.compose)
+    implementation(libs.squareup.moshi.kotlin)
+    implementation(libs.squareup.retrofit)
+    implementation(libs.squareup.retrofit.moshi)
+    implementation(libs.jakewharton.timber)
 }
