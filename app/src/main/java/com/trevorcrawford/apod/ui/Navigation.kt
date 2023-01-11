@@ -6,14 +6,14 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.trevorcrawford.apod.ui.astronomypicture.AstronomyPictureScreen
+import com.trevorcrawford.apod.ui.astronomypicture.AstronomyPicturesScreen
 
 @Composable
 fun MainNavigation() {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = "main") {
-        composable("main") { AstronomyPictureScreen(modifier = Modifier.fillMaxSize()) }
+        composable("main") { AstronomyPicturesScreen(modifier = Modifier.fillMaxSize()) }
         // TODO: Add more destinations
     }
 }

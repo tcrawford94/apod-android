@@ -9,6 +9,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -46,7 +49,7 @@ class OfflineFirstAstronomyPictureRepositoryTest {
     fun repository_astronomy_pictures_stream_returns_empty_list() = runTest {
         // Given FakeNetworkWithEmptyResult
         val astronomyPictureDao = FakeAstronomyPictureDao()
-        val networkDataSource = FakeNetworkWithEmptyResult()
+        val networkDataSource = FakeNetworkWithResult()
         val repository = OfflineFirstAstronomyPictureRepository(
             astronomyPictureDao = astronomyPictureDao,
             network = networkDataSource
@@ -64,7 +67,7 @@ class OfflineFirstAstronomyPictureRepositoryTest {
     }
 
     @Test
-    fun repository_astronomy_pictures_multiple_loads_overwrites_old_data() = runTest {
+    fun repository_multiple_loads_overwrites_old_data() = runTest {
         // Given FakeNetworkWithResult
         val astronomyPictureDao = FakeAstronomyPictureDao()
         val networkDataSource = FakeNetworkWithEmptyResult()
@@ -83,6 +86,32 @@ class OfflineFirstAstronomyPictureRepositoryTest {
                 .map(RoomAstronomyPicture::asExternalModel),
             repository.astronomyPictures.first()
         )
+    }
+
+    @Test
+    fun repository_load_pictures_updates_refreshing_pictures_flag_to_true() = runTest {
+        // Given FakeNetworkWithResult
+        val astronomyPictureDao = FakeAstronomyPictureDao()
+        val networkDataSource = FakeNetworkWithResult()
+        val repository = OfflineFirstAstronomyPictureRepository(
+            astronomyPictureDao = astronomyPictureDao,
+            network = networkDataSource
+        )
+        val isRefreshingPicturesValues = mutableListOf<Boolean>()
+        val collectJob = launch(UnconfinedTestDispatcher(testScheduler)) {
+            repository.isRefreshingPictures.toList(isRefreshingPicturesValues)
+        }
+
+        // When loadPictures
+        repository.loadPictures()
+
+        // Then
+        assertEquals(
+            listOf(false, true, false),
+            isRefreshingPicturesValues
+        )
+
+        collectJob.cancel()
     }
 }
 

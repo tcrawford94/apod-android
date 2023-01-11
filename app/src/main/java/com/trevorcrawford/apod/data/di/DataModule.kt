@@ -26,7 +26,7 @@ interface DataModule {
 
 class FakeAstronomyPictureRepository @Inject constructor() : AstronomyPictureRepository {
     override val astronomyPictures: Flow<List<AstronomyPicture>> = flowOf(fakeAstronomyPictures)
-
+    override val isRefreshingPictures: Flow<Boolean> = flowOf(false)
     override suspend fun loadPictures(): Result<Any> {
         return Result.success(fakeAstronomyPictures)
     }

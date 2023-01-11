@@ -1,15 +1,11 @@
 package com.trevorcrawford.apod.ui.astronomypicture
 
 import androidx.annotation.StringRes
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.trevorcrawford.apod.R
 import com.trevorcrawford.apod.data.AstronomyPictureRepository
-import com.trevorcrawford.apod.ui.astronomypicture.AstronomyPictureUiState.*
+import com.trevorcrawford.apod.ui.astronomypicture.AstronomyPicturesUiState.*
 import com.trevorcrawford.apod.ui.astronomypicture.model.AstronomyPicturePreview
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -18,7 +14,7 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class AstronomyPictureViewModel @Inject constructor(
+class AstronomyPicturesViewModel @Inject constructor(
     private val astronomyPictureRepository: AstronomyPictureRepository
 ) : ViewModel() {
 
@@ -30,12 +26,13 @@ class AstronomyPictureViewModel @Inject constructor(
      * Sort option, limited to lifecycle of this viewmodel, but maintained across any uiState data
      * refresh (e.g. [loadPictures])
      */
-    private var sortOption by mutableStateOf(availableSortOptions.first())
+    private var sortOption = MutableStateFlow(availableSortOptions.first())
 
-    val uiState: StateFlow<AstronomyPictureUiState> = combine(
+    val uiState: StateFlow<AstronomyPicturesUiState> = combine(
         astronomyPictureRepository.astronomyPictures,
-        snapshotFlow { sortOption }
-    ) { astronomyPictureList, sortOption ->
+        sortOption,
+        astronomyPictureRepository.isRefreshingPictures
+    ) { astronomyPictureList, sortOption, isRefreshing ->
         Data(
             previewList = astronomyPictureList.sortedBy { picture ->
                 when (sortOption) {
@@ -49,12 +46,17 @@ class AstronomyPictureViewModel @Inject constructor(
                     thumbnailUrl = it.url
                 )
             },
-            sortOrderRes = sortOption.titleRes
+            sortOrderRes = sortOption.titleRes,
+            isRefreshing = isRefreshing
         )
     }.catch {
         Timber.e(it.localizedMessage)
         Error(it)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Loading)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = Loading
+    )
 
     fun loadPictures() = viewModelScope.launch {
         astronomyPictureRepository.loadPictures()
@@ -66,7 +68,12 @@ class AstronomyPictureViewModel @Inject constructor(
     }
 
     fun changeSortOption() {
-        sortOption = availableSortOptions.first { it != sortOption }
+        sortOption.update { currentOption ->
+            when (currentOption) {
+                PictureSortOption.TITLE -> PictureSortOption.DATE
+                PictureSortOption.DATE -> PictureSortOption.TITLE
+            }
+        }
     }
 
     companion object {
@@ -77,15 +84,16 @@ class AstronomyPictureViewModel @Inject constructor(
     }
 }
 
-sealed class AstronomyPictureUiState {
-    object Loading : AstronomyPictureUiState()
+sealed interface AstronomyPicturesUiState {
+    object Loading : AstronomyPicturesUiState
 
-    data class Error(val throwable: Throwable) : AstronomyPictureUiState()
+    data class Error(val throwable: Throwable) : AstronomyPicturesUiState
 
     data class Data(
         val previewList: List<AstronomyPicturePreview>,
-        @StringRes val sortOrderRes: Int
-    ) : AstronomyPictureUiState()
+        @StringRes val sortOrderRes: Int,
+        val isRefreshing: Boolean
+    ) : AstronomyPicturesUiState
 }
 
 enum class PictureSortOption(

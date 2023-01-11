@@ -1,18 +1,20 @@
 package com.trevorcrawford.apod.ui.astronomypicture
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.pullRefreshIndicatorTransform
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
@@ -33,22 +35,24 @@ import java.time.format.FormatStyle
 
 @OptIn(ExperimentalLifecycleComposeApi::class)
 @Composable
-fun AstronomyPictureScreen(
+fun AstronomyPicturesScreen(
     modifier: Modifier = Modifier,
-    viewModel: AstronomyPictureViewModel = hiltViewModel()
+    viewModel: AstronomyPicturesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    AstronomyPictureScreen(
+    AstronomyPicturesScreen(
         uiState = uiState,
         onChangeSortClick = viewModel::changeSortOption,
+        refresh = viewModel::loadPictures,
         modifier = modifier
     )
 }
 
 @Composable
-internal fun AstronomyPictureScreen(
-    uiState: AstronomyPictureUiState,
+internal fun AstronomyPicturesScreen(
+    uiState: AstronomyPicturesUiState,
     onChangeSortClick: () -> Unit,
+    refresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -56,37 +60,42 @@ internal fun AstronomyPictureScreen(
         modifier = modifier
     ) {
         when (uiState) {
-            is AstronomyPictureUiState.Data -> {
-                ApodList(
+            is AstronomyPicturesUiState.Data -> {
+                AstronomyPicturePreviewList(
                     previewList = uiState.previewList,
                     sortOrderDescription = stringResource(id = uiState.sortOrderRes),
-                    onChangeSortClick = onChangeSortClick
+                    onChangeSortClick = onChangeSortClick,
+                    refreshing = uiState.isRefreshing,
+                    refresh = refresh
                 )
             }
-            else -> {
-                Text("UiState is not Success")
+            AstronomyPicturesUiState.Loading -> LoadingBox()
+            is AstronomyPicturesUiState.Error -> {
+                Text("Error Loading Pictures. Please double check that you have network connectivity and try again.")
             }
         }
 
     }
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
-private fun ApodList(
+private fun AstronomyPicturePreviewList(
     previewList: List<AstronomyPicturePreview>,
     sortOrderDescription: String,
     onChangeSortClick: () -> Unit,
+    refreshing: Boolean,
+    refresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val gradientHeight = 56.dp
-
-    Box(modifier) {
+    val pullRefreshState = rememberPullRefreshState(refreshing, refresh)
+    Box(modifier.pullRefresh(pullRefreshState)) {
         LazyColumn(
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
                 top = 8.dp,
-                bottom = gradientHeight
+                bottom = 56.dp // Don't overlap too much with FAB
             )
         ) {
             items(previewList) { preview ->
@@ -98,26 +107,20 @@ private fun ApodList(
                 )
             }
         }
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .height(gradientHeight)
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            MaterialTheme.colorScheme.onBackground
-                        )
-                    )
-                )
-        )
         SortFAB(
             sortOrderDescription = sortOrderDescription,
             onClick = onChangeSortClick,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(24.dp)
+        )
+        PullRefreshIndicator(
+            refreshing = refreshing,
+            state = pullRefreshState,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .pullRefreshIndicatorTransform(pullRefreshState)
+                .padding(top = if (pullRefreshState.progress > 0 || refreshing) 32.dp else 0.dp)
         )
     }
 }
@@ -190,6 +193,16 @@ private fun SortFAB(
     }
 }
 
+@Composable
+private fun LoadingBox() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        CircularProgressIndicator(Modifier.padding(top = 32.dp))
+    }
+}
+
 private val LongDateFormatter by lazy {
     DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)
 }
@@ -210,12 +223,14 @@ private fun RowPreview() {
 @Composable
 private fun PortraitPreview() {
     ApodTheme {
-        AstronomyPictureScreen(
-            uiState = AstronomyPictureUiState.Data(
+        AstronomyPicturesScreen(
+            uiState = AstronomyPicturesUiState.Data(
                 previewList = testPreviews,
-                sortOrderRes = R.string.title
+                sortOrderRes = R.string.title,
+                isRefreshing = true
             ),
-            onChangeSortClick = {}
+            onChangeSortClick = {},
+            refresh = {}
         )
     }
 }
@@ -224,12 +239,26 @@ private fun PortraitPreview() {
 @Composable
 private fun LandscapePreview() {
     ApodTheme {
-        AstronomyPictureScreen(
-            uiState = AstronomyPictureUiState.Data(
+        AstronomyPicturesScreen(
+            uiState = AstronomyPicturesUiState.Data(
                 previewList = testPreviews,
-                sortOrderRes = R.string.date
+                sortOrderRes = R.string.date,
+                isRefreshing = true
             ),
-            onChangeSortClick = {}
+            onChangeSortClick = {},
+            refresh = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 375, heightDp = 875)
+@Composable
+private fun LoadingPreview() {
+    ApodTheme {
+        AstronomyPicturesScreen(
+            uiState = AstronomyPicturesUiState.Loading,
+            onChangeSortClick = {},
+            refresh = {}
         )
     }
 }

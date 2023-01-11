@@ -13,7 +13,7 @@ import org.junit.runner.RunWith
 import java.time.LocalDate
 
 /**
- * UI tests for [AstronomyPictureScreen].
+ * UI tests for [AstronomyPicturesScreen].
  */
 @RunWith(AndroidJUnit4::class)
 class AstronomyPictureScreenTest {
@@ -24,12 +24,14 @@ class AstronomyPictureScreenTest {
     @Before
     fun setup() {
         composeTestRule.setContent {
-            AstronomyPictureScreen(
-                uiState = AstronomyPictureUiState.Data(
+            AstronomyPicturesScreen(
+                uiState = AstronomyPicturesUiState.Data(
                     previewList = TEST_DATA,
-                    sortOrderRes = AstronomyPictureViewModel.availableSortOptions.first().titleRes
+                    sortOrderRes = AstronomyPicturesViewModel.availableSortOptions.first().titleRes,
+                    isRefreshing = false
                 ),
-                onChangeSortClick = {}
+                onChangeSortClick = {},
+                refresh = {}
             )
         }
     }
