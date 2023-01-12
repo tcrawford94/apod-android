@@ -5,17 +5,28 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.trevorcrawford.apod.R
 import com.trevorcrawford.apod.data.AstronomyPictureRepository
-import com.trevorcrawford.apod.ui.astronomypicture.AstronomyPicturesUiState.*
+import com.trevorcrawford.apod.ui.astronomypicture.AstronomyPicturesUiState.Data
+import com.trevorcrawford.apod.ui.astronomypicture.AstronomyPicturesUiState.Error
+import com.trevorcrawford.apod.ui.astronomypicture.AstronomyPicturesUiState.Loading
 import com.trevorcrawford.apod.ui.astronomypicture.model.AstronomyPicturePreview
+import com.trevorcrawford.apod.ui.util.SnackbarManager
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.net.UnknownHostException
 import javax.inject.Inject
 
 @HiltViewModel
 class AstronomyPicturesViewModel @Inject constructor(
-    private val astronomyPictureRepository: AstronomyPictureRepository
+    private val astronomyPictureRepository: AstronomyPictureRepository,
+    private val snackbarManager: SnackbarManager
 ) : ViewModel() {
 
     init {
@@ -51,6 +62,12 @@ class AstronomyPicturesViewModel @Inject constructor(
         )
     }.catch {
         Timber.e(it.localizedMessage)
+        snackbarManager.showMessage(
+            when (it) {
+                is UnknownHostException -> R.string.error_no_network
+                else -> R.string.error_unable_to_load_pictures
+            }
+        )
         Error(it)
     }.stateIn(
         scope = viewModelScope,
@@ -61,9 +78,13 @@ class AstronomyPicturesViewModel @Inject constructor(
     fun loadPictures() = viewModelScope.launch {
         astronomyPictureRepository.loadPictures()
             .onFailure {
-                val message = it.localizedMessage
-                Timber.e(message)
-                //_errorMessage.update { message ?: "Something went wrong." }
+                Timber.e(it.localizedMessage)
+                snackbarManager.showMessage(
+                    when (it) {
+                        is UnknownHostException -> R.string.error_no_network
+                        else -> R.string.error_unable_to_load_pictures
+                    }
+                )
             }
     }
 

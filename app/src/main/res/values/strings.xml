@@ -3,4 +3,6 @@
     <string name="sorted_by">%s Sorted</string>
     <string name="title">Title</string>
     <string name="date">Date</string>
+    <string name="error_no_network">Please check your network connection and try again.</string>
+    <string name="error_unable_to_load_pictures">Please check your network connection and try again.</string>
 </resources>

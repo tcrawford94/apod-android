@@ -5,6 +5,7 @@ import com.trevorcrawford.apod.data.AstronomyPicture
 import com.trevorcrawford.apod.data.AstronomyPictureRepository
 import com.trevorcrawford.apod.data.di.fakeAstronomyPictures
 import com.trevorcrawford.apod.ui.astronomypicture.model.AstronomyPicturePreview
+import com.trevorcrawford.apod.ui.util.SnackbarManager
 import com.trevorcrawford.apod.util.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -29,7 +30,11 @@ class AstronomyPicturesViewModelTest {
     @Test
     fun uiState_initially_loading() = runTest {
         // Given
-        val viewModel = AstronomyPicturesViewModel(FakeOfflineAstronomyPictureRepository())
+        val viewModel =
+            AstronomyPicturesViewModel(
+                astronomyPictureRepository = FakeOfflineAstronomyPictureRepository(),
+                snackbarManager = SnackbarManager()
+            )
 
         // When
         // nothing happens
@@ -41,10 +46,13 @@ class AstronomyPicturesViewModelTest {
     @Test
     fun viewModel_on_init_pictures_loaded() = runTest {
         // Given
-        val viewModel = AstronomyPicturesViewModel(FakeAstronomyPictureRepository())
+        val viewModel = AstronomyPicturesViewModel(
+            astronomyPictureRepository = FakeAstronomyPictureRepository(),
+            snackbarManager = SnackbarManager()
+        )
 
         // When
-        // nothing happens
+        // nothing happens, since in init block of viewmodel
 
         // Then
         assertEquals(
