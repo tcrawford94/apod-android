@@ -42,8 +42,8 @@ fun AstronomyPicturesScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     AstronomyPicturesScreen(
         uiState = uiState,
-        onChangeSortClick = viewModel::changeSortOption,
-        refresh = viewModel::loadPictures,
+        onChangeSortOption = viewModel::changeSortOption,
+        onRefresh = viewModel::loadPictures,
         modifier = modifier
     )
 }
@@ -51,8 +51,8 @@ fun AstronomyPicturesScreen(
 @Composable
 internal fun AstronomyPicturesScreen(
     uiState: AstronomyPicturesUiState,
-    onChangeSortClick: () -> Unit,
-    refresh: () -> Unit,
+    onChangeSortOption: () -> Unit,
+    onRefresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -64,9 +64,9 @@ internal fun AstronomyPicturesScreen(
                 AstronomyPicturePreviewList(
                     previewList = uiState.previewList,
                     sortOrderDescription = stringResource(id = uiState.sortOrderRes),
-                    onChangeSortClick = onChangeSortClick,
+                    onChangeSortOption = onChangeSortOption,
                     refreshing = uiState.isRefreshing,
-                    refresh = refresh
+                    onRefresh = onRefresh
                 )
             }
             AstronomyPicturesUiState.Loading -> LoadingBox()
@@ -83,12 +83,12 @@ internal fun AstronomyPicturesScreen(
 private fun AstronomyPicturePreviewList(
     previewList: List<AstronomyPicturePreview>,
     sortOrderDescription: String,
-    onChangeSortClick: () -> Unit,
+    onChangeSortOption: () -> Unit,
     refreshing: Boolean,
-    refresh: () -> Unit,
+    onRefresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val pullRefreshState = rememberPullRefreshState(refreshing, refresh)
+    val pullRefreshState = rememberPullRefreshState(refreshing, onRefresh)
     Box(modifier.pullRefresh(pullRefreshState)) {
         LazyColumn(
             contentPadding = PaddingValues(
@@ -109,7 +109,7 @@ private fun AstronomyPicturePreviewList(
         }
         SortFAB(
             sortOrderDescription = sortOrderDescription,
-            onClick = onChangeSortClick,
+            onClick = onChangeSortOption,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(24.dp)
@@ -229,8 +229,8 @@ private fun PortraitPreview() {
                 sortOrderRes = R.string.title,
                 isRefreshing = true
             ),
-            onChangeSortClick = {},
-            refresh = {}
+            onChangeSortOption = {},
+            onRefresh = {}
         )
     }
 }
@@ -245,8 +245,8 @@ private fun LandscapePreview() {
                 sortOrderRes = R.string.date,
                 isRefreshing = true
             ),
-            onChangeSortClick = {},
-            refresh = {}
+            onChangeSortOption = {},
+            onRefresh = {}
         )
     }
 }
@@ -257,8 +257,8 @@ private fun LoadingPreview() {
     ApodTheme {
         AstronomyPicturesScreen(
             uiState = AstronomyPicturesUiState.Loading,
-            onChangeSortClick = {},
-            refresh = {}
+            onChangeSortOption = {},
+            onRefresh = {}
         )
     }
 }

@@ -30,8 +30,8 @@ class AstronomyPictureScreenTest {
                     sortOrderRes = AstronomyPicturesViewModel.availableSortOptions.first().titleRes,
                     isRefreshing = false
                 ),
-                onChangeSortClick = {},
-                refresh = {}
+                onChangeSortOption = {},
+                onRefresh = {}
             )
         }
     }
