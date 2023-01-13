@@ -8,4 +8,5 @@ data class AstronomyPicture(
     val date: LocalDate,
     val url: String,
     val hdUrl: String,
+    val copyright: String
 )

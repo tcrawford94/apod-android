@@ -36,6 +36,7 @@ import java.time.format.FormatStyle
 @OptIn(ExperimentalLifecycleComposeApi::class)
 @Composable
 fun AstronomyPicturesScreen(
+    onNavigateToPictureDetail: (date: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AstronomyPicturesViewModel = hiltViewModel()
 ) {
@@ -44,6 +45,7 @@ fun AstronomyPicturesScreen(
         uiState = uiState,
         onChangeSortOption = viewModel::changeSortOption,
         onRefresh = viewModel::loadPictures,
+        onPreviewClicked = { onNavigateToPictureDetail(it.date.toString()) },
         modifier = modifier
     )
 }
@@ -53,6 +55,7 @@ internal fun AstronomyPicturesScreen(
     uiState: AstronomyPicturesUiState,
     onChangeSortOption: () -> Unit,
     onRefresh: () -> Unit,
+    onPreviewClicked: (preview: AstronomyPicturePreview) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -66,7 +69,8 @@ internal fun AstronomyPicturesScreen(
                     sortOrderDescription = stringResource(id = uiState.sortOrderRes),
                     onChangeSortOption = onChangeSortOption,
                     refreshing = uiState.isRefreshing,
-                    onRefresh = onRefresh
+                    onRefresh = onRefresh,
+                    onPreviewClicked = onPreviewClicked
                 )
             }
             AstronomyPicturesUiState.Loading -> LoadingBox()
@@ -86,6 +90,7 @@ private fun AstronomyPicturePreviewList(
     onChangeSortOption: () -> Unit,
     refreshing: Boolean,
     onRefresh: () -> Unit,
+    onPreviewClicked: (preview: AstronomyPicturePreview) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pullRefreshState = rememberPullRefreshState(refreshing, onRefresh)
@@ -100,7 +105,8 @@ private fun AstronomyPicturePreviewList(
         ) {
             items(previewList) { preview ->
                 ApodPreviewRow(
-                    preview,
+                    astronomyPicturePreview = preview,
+                    onClick = { onPreviewClicked(preview) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp)
@@ -125,12 +131,15 @@ private fun AstronomyPicturePreviewList(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ApodPreviewRow(
-    uiState: AstronomyPicturePreview,
+    astronomyPicturePreview: AstronomyPicturePreview,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
+        onClick = onClick,
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.primary,
         modifier = modifier
@@ -139,7 +148,7 @@ private fun ApodPreviewRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AsyncImage(
-                model = uiState.thumbnailUrl,
+                model = astronomyPicturePreview.thumbnailUrl,
                 modifier = Modifier
                     .size(100.dp)
                     .padding(12.dp)
@@ -150,19 +159,38 @@ private fun ApodPreviewRow(
             )
             Column(
                 verticalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(top = 12.dp, bottom = 12.dp, end = 12.dp)
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 12.dp, end = 12.dp)
+                    .weight(1f)
             ) {
                 Text(
-                    text = uiState.title,
+                    text = astronomyPicturePreview.title,
+                    modifier = Modifier.fillMaxWidth(),
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 2
                 )
                 Text(
-                    text = LongDateFormatter.format(uiState.date),
-                    modifier = Modifier.paddingFromBaseline(16.dp),
+                    text = LongDateFormatter.format(astronomyPicturePreview.date),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .paddingFromBaseline(16.dp),
                     style = MaterialTheme.typography.labelSmall
                 )
+                if (astronomyPicturePreview.copyright.isNotBlank()) {
+                    Text(
+                        text = stringResource(
+                            id = R.string.copyright,
+                            astronomyPicturePreview.copyright
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .paddingFromBaseline(16.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1
+                    )
+                }
             }
         }
     }
@@ -213,7 +241,8 @@ private val LongDateFormatter by lazy {
 private fun RowPreview() {
     ApodTheme {
         ApodPreviewRow(
-            uiState = testPreviews[1],
+            astronomyPicturePreview = testPreviews[1],
+            onClick = {},
             modifier = Modifier.padding(16.dp)
         )
     }
@@ -230,7 +259,8 @@ private fun PortraitPreview() {
                 isRefreshing = true
             ),
             onChangeSortOption = {},
-            onRefresh = {}
+            onRefresh = {},
+            onPreviewClicked = {}
         )
     }
 }
@@ -246,7 +276,8 @@ private fun LandscapePreview() {
                 isRefreshing = true
             ),
             onChangeSortOption = {},
-            onRefresh = {}
+            onRefresh = {},
+            onPreviewClicked = {}
         )
     }
 }
@@ -258,25 +289,29 @@ private fun LoadingPreview() {
         AstronomyPicturesScreen(
             uiState = AstronomyPicturesUiState.Loading,
             onChangeSortOption = {},
-            onRefresh = {}
+            onRefresh = {},
+            onPreviewClicked = {}
         )
     }
 }
 
-private val testPreviews = listOf(
+val testPreviews = listOf(
     AstronomyPicturePreview(
         title = "The Milky Way",
         date = LocalDate.now(),
         thumbnailUrl = "https://apod.nasa.gov/apod/image/0712/ic1396_wood.jpg",
+        copyright = "Ricky Bobby, if you ain't first you're last"
     ),
     AstronomyPicturePreview(
         title = "Orion's Belt Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
         date = LocalDate.MIN,
         thumbnailUrl = "https://apod.nasa.gov/apod/image/0712/ic1396_wood.jpg",
+        copyright = "Freddie Kruger"
     ),
     AstronomyPicturePreview(
         title = "Full Moon",
         date = LocalDate.MAX,
         thumbnailUrl = "https://apod.nasa.gov/apod/image/0712/ic1396_wood.jpg",
+        copyright = "Eddie Munster"
     )
 )

@@ -1,5 +1,6 @@
 package com.trevorcrawford.apod.data.local.database.model
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
@@ -13,9 +14,10 @@ data class RoomAstronomyPicture(
     @PrimaryKey(autoGenerate = true) val uid: Int = 0,
     val title: String,
     val explanation: String,
-    val date: LocalDate,
+    @ColumnInfo(index = true) val date: LocalDate,
     val url: String,
-    val hdUrl: String
+    val hdUrl: String,
+    @ColumnInfo(defaultValue = "") val copyright: String
 )
 
 fun RoomAstronomyPicture.asExternalModel() = AstronomyPicture(
@@ -23,5 +25,6 @@ fun RoomAstronomyPicture.asExternalModel() = AstronomyPicture(
     explanation = explanation,
     date = date,
     url = url,
-    hdUrl = hdUrl
+    hdUrl = hdUrl,
+    copyright = copyright
 )

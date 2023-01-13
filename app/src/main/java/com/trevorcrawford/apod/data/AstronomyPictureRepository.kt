@@ -9,12 +9,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import timber.log.Timber
+import java.time.LocalDate
 import javax.inject.Inject
 
 interface AstronomyPictureRepository {
     val astronomyPictures: Flow<List<AstronomyPicture>>
     val isRefreshingPictures: Flow<Boolean>
     suspend fun loadPictures(): Result<Any>
+    suspend fun getPictureDetail(date: LocalDate): Flow<AstronomyPicture>
 }
 
 class OfflineFirstAstronomyPictureRepository @Inject constructor(
@@ -32,17 +34,21 @@ class OfflineFirstAstronomyPictureRepository @Inject constructor(
         isRefreshingPictures.update { true }
         return network.getPictures()
             .onSuccess { networkResourceList ->
-                val dbList = networkResourceList.filter { networkAstronomyPicture ->
-                    networkAstronomyPicture.isPicture()
-                }.map { networkAstronomyPicture ->
-                    RoomAstronomyPicture(
-                        title = networkAstronomyPicture.title,
-                        explanation = networkAstronomyPicture.explanation,
-                        date = networkAstronomyPicture.date,
-                        url = networkAstronomyPicture.url ?: "",
-                        hdUrl = networkAstronomyPicture.hdUrl ?: ""
-                    )
-                }
+                val dbList: List<RoomAstronomyPicture> =
+                    networkResourceList.filter { networkAstronomyPicture ->
+                        networkAstronomyPicture.isPicture()
+                    }.mapNotNull { networkAstronomyPicture ->
+                        networkAstronomyPicture.date?.let { date ->
+                            RoomAstronomyPicture(
+                                title = networkAstronomyPicture.title ?: "",
+                                explanation = networkAstronomyPicture.explanation ?: "",
+                                date = date,
+                                url = networkAstronomyPicture.url ?: "",
+                                hdUrl = networkAstronomyPicture.hdUrl ?: "",
+                                copyright = networkAstronomyPicture.copyright ?: ""
+                            )
+                        }
+                    }
 
                 astronomyPictureDao.clear()
                 astronomyPictureDao.insert(dbList)
@@ -53,4 +59,8 @@ class OfflineFirstAstronomyPictureRepository @Inject constructor(
                 Timber.e(it.localizedMessage)
             }
     }
+
+    override suspend fun getPictureDetail(date: LocalDate): Flow<AstronomyPicture> =
+        astronomyPictureDao.getAstronomyPicture(date.toString())
+            .map(RoomAstronomyPicture::asExternalModel)
 }

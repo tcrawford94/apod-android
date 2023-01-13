@@ -54,7 +54,8 @@ class AstronomyPicturesViewModel @Inject constructor(
                 AstronomyPicturePreview(
                     title = it.title,
                     date = it.date,
-                    thumbnailUrl = it.url
+                    thumbnailUrl = it.url,
+                    copyright = it.copyright
                 )
             },
             sortOrderRes = sortOption.titleRes,

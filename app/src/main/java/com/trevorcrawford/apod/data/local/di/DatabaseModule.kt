@@ -27,6 +27,6 @@ class DatabaseModule {
             appContext,
             AppDatabase::class.java,
             "AstronomyPicture"
-        ).build()
+        ).fallbackToDestructiveMigration().build()
     }
 }

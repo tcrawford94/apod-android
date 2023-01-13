@@ -21,6 +21,8 @@ import kotlinx.coroutines.launch
  */
 object MainDestinations {
     const val RANDOM_APOD_ROUTE = "random_apod_list"
+    const val APOD_DETAIL_ROUTE = "apod_detail"
+    const val APOD_DATE_KEY = "apodDate" // LocalDate time formatted YYYY-MM-DD
 }
 
 /**
