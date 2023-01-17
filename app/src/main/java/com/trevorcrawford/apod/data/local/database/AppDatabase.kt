@@ -10,7 +10,8 @@ import com.trevorcrawford.apod.data.local.database.model.RoomAstronomyPicture
     entities = [RoomAstronomyPicture::class],
     autoMigrations = [
         AutoMigration(from = 1, to = 2)
-    ]
+    ],
+    exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun astronomyPictureDao(): AstronomyPictureDao

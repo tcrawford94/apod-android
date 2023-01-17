@@ -9,7 +9,7 @@ import com.trevorcrawford.apod.data.local.database.TypeConverters.LocalDateTypeC
 import java.time.LocalDate
 
 @TypeConverters(LocalDateTypeConverter::class)
-@Entity(tableName = "astronomy_pictures")
+@Entity(tableName = RoomAstronomyPicture.TABLE_NAME)
 data class RoomAstronomyPicture(
     @PrimaryKey(autoGenerate = true) val uid: Int = 0,
     val title: String,
@@ -18,7 +18,11 @@ data class RoomAstronomyPicture(
     val url: String,
     val hdUrl: String,
     @ColumnInfo(defaultValue = "") val copyright: String
-)
+) {
+    companion object {
+        const val TABLE_NAME = "astronomy_pictures"
+    }
+}
 
 fun RoomAstronomyPicture.asExternalModel() = AstronomyPicture(
     title = title,
