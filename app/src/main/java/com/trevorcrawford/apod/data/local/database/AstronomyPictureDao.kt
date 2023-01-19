@@ -10,7 +10,7 @@ interface AstronomyPictureDao {
     fun getAstronomyPictures(): Flow<List<RoomAstronomyPicture>>
 
     @Query("SELECT * FROM ${RoomAstronomyPicture.TABLE_NAME} WHERE date = :date")
-    fun getAstronomyPicture(date: String): Flow<RoomAstronomyPicture>
+    fun getAstronomyPicture(date: String): Flow<RoomAstronomyPicture?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(pictures: List<RoomAstronomyPicture>)

@@ -7,6 +7,7 @@ import com.trevorcrawford.apod.data.di.fakeAstronomyPictures
 import com.trevorcrawford.apod.ui.astronomypicture.model.AstronomyPicturePreview
 import com.trevorcrawford.apod.ui.util.SnackbarManager
 import com.trevorcrawford.apod.util.MainDispatcherRule
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -16,6 +17,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import java.net.UnknownHostException
+import java.time.LocalDate
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -61,9 +63,10 @@ class AstronomyPicturesViewModelTest {
                     AstronomyPicturePreview(
                         title = it.title,
                         date = it.date,
-                        thumbnailUrl = it.url
+                        thumbnailUrl = it.url,
+                        copyright = it.copyright
                     )
-                },
+                }.toImmutableList(),
                 sortOrderRes = AstronomyPicturesViewModel.availableSortOptions.first().titleRes,
                 isRefreshing = false
             ),
@@ -78,6 +81,10 @@ private class FakeOfflineAstronomyPictureRepository : FakeAstronomyPictureReposi
 
     override suspend fun loadPictures(): Result<Any> {
         return Result.failure(UnknownHostException("Please check your network connection and try again."))
+    }
+
+    override suspend fun getPictureDetail(date: LocalDate): Flow<AstronomyPicture> {
+        TODO("Not yet implemented")
     }
 }
 
@@ -94,5 +101,9 @@ private open class FakeAstronomyPictureRepository : AstronomyPictureRepository {
         data.clear()
         data.addAll(fakeAstronomyPictures)
         return Result.success(true)
+    }
+
+    override suspend fun getPictureDetail(date: LocalDate): Flow<AstronomyPicture> {
+        TODO("Not yet implemented")
     }
 }
