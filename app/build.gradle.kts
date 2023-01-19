@@ -129,4 +129,5 @@ dependencies {
     implementation(libs.squareup.retrofit)
     implementation(libs.squareup.retrofit.moshi)
     implementation(libs.jakewharton.timber)
+    implementation(libs.kotlinx.collections.immutable)
 }

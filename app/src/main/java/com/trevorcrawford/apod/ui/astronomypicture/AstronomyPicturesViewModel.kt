@@ -11,6 +11,8 @@ import com.trevorcrawford.apod.ui.astronomypicture.AstronomyPicturesUiState.Load
 import com.trevorcrawford.apod.ui.astronomypicture.model.AstronomyPicturePreview
 import com.trevorcrawford.apod.ui.util.SnackbarManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -57,7 +59,7 @@ class AstronomyPicturesViewModel @Inject constructor(
                     thumbnailUrl = it.url,
                     copyright = it.copyright
                 )
-            },
+            }.toImmutableList(),
             sortOrderRes = sortOption.titleRes,
             isRefreshing = isRefreshing
         )
@@ -112,7 +114,7 @@ sealed interface AstronomyPicturesUiState {
     data class Error(val throwable: Throwable) : AstronomyPicturesUiState
 
     data class Data(
-        val previewList: List<AstronomyPicturePreview>,
+        val previewList: ImmutableList<AstronomyPicturePreview>,
         @StringRes val sortOrderRes: Int,
         val isRefreshing: Boolean
     ) : AstronomyPicturesUiState

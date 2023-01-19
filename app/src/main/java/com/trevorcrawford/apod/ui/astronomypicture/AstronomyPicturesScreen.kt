@@ -29,6 +29,8 @@ import com.trevorcrawford.apod.R
 import com.trevorcrawford.apod.ui.astronomypicture.model.AstronomyPicturePreview
 import com.trevorcrawford.apod.ui.theme.ApodIcons
 import com.trevorcrawford.apod.ui.theme.ApodTheme
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -85,7 +87,7 @@ internal fun AstronomyPicturesScreen(
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun AstronomyPicturePreviewList(
-    previewList: List<AstronomyPicturePreview>,
+    previewList: ImmutableList<AstronomyPicturePreview>,
     sortOrderDescription: String,
     onChangeSortOption: () -> Unit,
     refreshing: Boolean,
@@ -295,7 +297,7 @@ private fun LoadingPreview() {
     }
 }
 
-val testPreviews = listOf(
+val testPreviews = persistentListOf(
     AstronomyPicturePreview(
         title = "The Milky Way",
         date = LocalDate.now(),
