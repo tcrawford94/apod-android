@@ -16,7 +16,7 @@ interface AstronomyPictureRepository {
     val astronomyPictures: Flow<List<AstronomyPicture>>
     val isRefreshingPictures: Flow<Boolean>
     suspend fun loadPictures(): Result<Any>
-    suspend fun getPictureDetail(date: LocalDate): Flow<AstronomyPicture>
+    suspend fun getPictureDetail(date: LocalDate): Flow<AstronomyPicture?>
 }
 
 class OfflineFirstAstronomyPictureRepository @Inject constructor(
@@ -60,7 +60,7 @@ class OfflineFirstAstronomyPictureRepository @Inject constructor(
             }
     }
 
-    override suspend fun getPictureDetail(date: LocalDate): Flow<AstronomyPicture> =
+    override suspend fun getPictureDetail(date: LocalDate): Flow<AstronomyPicture?> =
         astronomyPictureDao.getAstronomyPicture(date.toString())
-            .map(RoomAstronomyPicture::asExternalModel)
+            .map { it?.asExternalModel() }
 }
