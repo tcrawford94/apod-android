@@ -35,8 +35,8 @@ class OfflineFirstAstronomyPictureRepository @Inject constructor(
         return network.getPictures()
             .onSuccess { networkResourceList ->
                 val dbList: List<RoomAstronomyPicture> =
-                    networkResourceList.filter { networkAstronomyPicture ->
-                        networkAstronomyPicture.isPicture()
+                    networkResourceList.filter {
+                        it.isPicture
                     }.mapNotNull { networkAstronomyPicture ->
                         networkAstronomyPicture.date?.let { date ->
                             RoomAstronomyPicture(

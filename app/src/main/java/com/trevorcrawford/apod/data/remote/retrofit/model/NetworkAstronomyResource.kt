@@ -1,9 +1,11 @@
 package com.trevorcrawford.apod.data.remote.retrofit.model
 
+import androidx.annotation.Keep
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import java.time.LocalDate
 
+@Keep
 @JsonClass(generateAdapter = true)
 data class NetworkAstronomyResource(
     val title: String? = "",
@@ -14,9 +16,9 @@ data class NetworkAstronomyResource(
     val url: String? = "",
     val copyright: String? = ""
 ) {
-    fun isPicture() = mediaType == MediaType.IMAGE.type
+    val isPicture = mediaType == IMAGE_MEDIA_TYPE
 
-    enum class MediaType(val type: String) {
-        IMAGE("image")
+    companion object {
+        const val IMAGE_MEDIA_TYPE = "image"
     }
 }
