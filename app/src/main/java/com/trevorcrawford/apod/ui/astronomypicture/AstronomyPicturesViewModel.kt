@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -32,7 +33,11 @@ class AstronomyPicturesViewModel @Inject constructor(
 ) : ViewModel() {
 
     init {
-        loadPictures()
+        viewModelScope.launch {
+            if (astronomyPictureRepository.astronomyPictures.first().isEmpty()){
+                loadPictures()
+            }
+        }
     }
 
     /**
