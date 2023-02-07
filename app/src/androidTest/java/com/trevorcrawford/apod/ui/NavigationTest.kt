@@ -4,7 +4,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.trevorcrawford.apod.R
-import com.trevorcrawford.apod.data.di.fakeAstronomyPictures
+import com.trevorcrawford.apod.data.fake.fakeAstronomyPictures
 import com.trevorcrawford.apod.ui.util.SnackbarManager
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest

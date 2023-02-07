@@ -10,8 +10,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDate
 import javax.inject.Inject
@@ -22,14 +22,26 @@ class AstronomyPictureDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val astronomyPictureRepository: AstronomyPictureRepository,
 ) : ViewModel() {
-    val pictureDetail: StateFlow<AstronomyPicture?> =
+    val uiState: StateFlow<AstronomyPictureDetailUiState> =
         savedStateHandle.getStateFlow<String?>(APOD_DATE_KEY, null)
-            .filterNotNull()
             .flatMapLatest {
                 astronomyPictureRepository.getPictureDetail(LocalDate.parse(it))
+            }
+            .mapNotNull {
+                if (it == null) {
+                    AstronomyPictureDetailUiState.Loading
+                } else {
+                    AstronomyPictureDetailUiState.Data(it)
+                }
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
-                initialValue = null
+                initialValue = AstronomyPictureDetailUiState.Loading
             )
+}
+
+sealed interface AstronomyPictureDetailUiState {
+    object Loading : AstronomyPictureDetailUiState
+    data class Error(val throwable: Throwable) : AstronomyPictureDetailUiState
+    data class Data(val astronomyPicture: AstronomyPicture) : AstronomyPictureDetailUiState
 }
