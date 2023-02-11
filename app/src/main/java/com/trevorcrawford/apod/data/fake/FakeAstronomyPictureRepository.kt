@@ -3,33 +3,21 @@ package com.trevorcrawford.apod.data.fake
 import com.trevorcrawford.apod.data.AstronomyPicture
 import com.trevorcrawford.apod.data.AstronomyPictureRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
-import java.net.UnknownHostException
 import java.time.LocalDate
 import javax.inject.Inject
 
 open class FakeAstronomyPictureRepository @Inject constructor() : AstronomyPictureRepository {
-    override val astronomyPictures: Flow<List<AstronomyPicture>> = flowOf(fakeAstronomyPictures)
-    override val isRefreshingPictures: Flow<Boolean> = flowOf(false)
+    private val _astronomyPictures = MutableSharedFlow<List<AstronomyPicture>>()
+    override val astronomyPictures: Flow<List<AstronomyPicture>> = _astronomyPictures
     override suspend fun loadPictures(): Result<Any> {
+        _astronomyPictures.emit(fakeAstronomyPictures)
         return Result.success(fakeAstronomyPictures)
     }
 
     override suspend fun getPictureDetail(date: LocalDate): Flow<AstronomyPicture?> =
         flowOf(fakeAstronomyPictures.first())
-}
-
-class FakeOfflineAstronomyPictureRepository : FakeAstronomyPictureRepository() {
-    override val astronomyPictures: Flow<List<AstronomyPicture>>
-        get() = flow {}
-
-    override suspend fun loadPictures(): Result<Any> {
-        return Result.failure(UnknownHostException("Please check your network connection and try again."))
-    }
-
-    override suspend fun getPictureDetail(date: LocalDate): Flow<AstronomyPicture?> =
-        flowOf(null)
 }
 
 val fakeAstronomyPictures = listOf(

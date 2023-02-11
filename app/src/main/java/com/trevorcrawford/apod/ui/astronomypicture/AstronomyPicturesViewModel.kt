@@ -7,18 +7,18 @@ import com.trevorcrawford.apod.R
 import com.trevorcrawford.apod.data.AstronomyPictureRepository
 import com.trevorcrawford.apod.ui.astronomypicture.AstronomyPicturesUiState.Data
 import com.trevorcrawford.apod.ui.astronomypicture.AstronomyPicturesUiState.Error
-import com.trevorcrawford.apod.ui.astronomypicture.AstronomyPicturesUiState.Loading
 import com.trevorcrawford.apod.ui.astronomypicture.model.AstronomyPicturePreview
 import com.trevorcrawford.apod.ui.util.SnackbarManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -32,24 +32,22 @@ class AstronomyPicturesViewModel @Inject constructor(
     private val snackbarManager: SnackbarManager
 ) : ViewModel() {
 
-    init {
-        viewModelScope.launch {
-            if (astronomyPictureRepository.astronomyPictures.first().isEmpty()){
-                loadPictures()
-            }
-        }
-    }
-
     /**
      * Sort option, limited to lifecycle of this viewmodel, but maintained across any uiState data
      * refresh (e.g. [loadPictures])
      */
-    private var sortOption = MutableStateFlow(availableSortOptions.first())
+    private val sortOption = MutableStateFlow(availableSortOptions.first())
+    private val isLoadingPictures = MutableStateFlow(false)
 
     val uiState: StateFlow<AstronomyPicturesUiState> = combine(
-        astronomyPictureRepository.astronomyPictures,
+        astronomyPictureRepository.astronomyPictures.onEach {
+            if (it.isEmpty()) {
+                loadPictures()
+                //isLoadingPictures.update { true }
+            }
+        },
         sortOption,
-        astronomyPictureRepository.isRefreshingPictures
+        isLoadingPictures
     ) { astronomyPictureList, sortOption, isRefreshing ->
         Data(
             previewList = astronomyPictureList.sortedBy { picture ->
@@ -80,12 +78,19 @@ class AstronomyPicturesViewModel @Inject constructor(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = Loading
+        // initialValue UiState has isRefreshing true b/c waiting for first value from repository
+        initialValue = Data(persistentListOf(), sortOption.value.titleRes, false)
     )
 
     fun loadPictures() = viewModelScope.launch {
+        if (isLoadingPictures.value) return@launch
+        isLoadingPictures.update { true }
         astronomyPictureRepository.loadPictures()
+            .onSuccess {
+                isLoadingPictures.update { false }
+            }
             .onFailure {
+                isLoadingPictures.update { false }
                 Timber.e(it.localizedMessage)
                 snackbarManager.showMessage(
                     when (it) {
@@ -114,15 +119,13 @@ class AstronomyPicturesViewModel @Inject constructor(
 }
 
 sealed interface AstronomyPicturesUiState {
-    object Loading : AstronomyPicturesUiState
-
-    data class Error(val throwable: Throwable) : AstronomyPicturesUiState
-
     data class Data(
         val previewList: ImmutableList<AstronomyPicturePreview>,
         @StringRes val sortOrderRes: Int,
         val isRefreshing: Boolean
     ) : AstronomyPicturesUiState
+
+    data class Error(val throwable: Throwable) : AstronomyPicturesUiState
 }
 
 enum class PictureSortOption(

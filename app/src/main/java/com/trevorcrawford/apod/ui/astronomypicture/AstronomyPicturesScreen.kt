@@ -75,9 +75,12 @@ internal fun AstronomyPicturesScreen(
                     onPreviewClicked = onPreviewClicked
                 )
             }
-            AstronomyPicturesUiState.Loading -> LoadingBox()
             is AstronomyPicturesUiState.Error -> {
-                Text("Error Loading Pictures. Please double check that you have network connectivity and try again.")
+                // 
+                Text(
+                    uiState.throwable.localizedMessage
+                        ?: stringResource(id = R.string.error_unable_to_load_pictures)
+                )
             }
         }
 
@@ -103,7 +106,8 @@ private fun AstronomyPicturePreviewList(
                 end = 16.dp,
                 top = 8.dp,
                 bottom = 56.dp // Don't overlap too much with FAB
-            )
+            ),
+            modifier = Modifier.fillMaxSize()
         ) {
             items(previewList) { preview ->
                 ApodPreviewRow(
@@ -115,13 +119,15 @@ private fun AstronomyPicturePreviewList(
                 )
             }
         }
-        SortFAB(
-            sortOrderDescription = sortOrderDescription,
-            onClick = onChangeSortOption,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(24.dp)
-        )
+        if (previewList.isNotEmpty()) {
+            SortFAB(
+                sortOrderDescription = sortOrderDescription,
+                onClick = onChangeSortOption,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(24.dp)
+            )
+        }
         PullRefreshIndicator(
             refreshing = refreshing,
             state = pullRefreshState,
@@ -223,16 +229,6 @@ private fun SortFAB(
     }
 }
 
-@Composable
-private fun LoadingBox() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter
-    ) {
-        CircularProgressIndicator(Modifier.padding(top = 32.dp))
-    }
-}
-
 private val LongDateFormatter by lazy {
     DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)
 }
@@ -258,7 +254,7 @@ private fun PortraitPreview() {
             uiState = AstronomyPicturesUiState.Data(
                 previewList = testPreviews,
                 sortOrderRes = R.string.title,
-                isRefreshing = true
+                isRefreshing = false
             ),
             onChangeSortOption = {},
             onRefresh = {},
@@ -275,7 +271,7 @@ private fun LandscapePreview() {
             uiState = AstronomyPicturesUiState.Data(
                 previewList = testPreviews,
                 sortOrderRes = R.string.date,
-                isRefreshing = true
+                isRefreshing = false
             ),
             onChangeSortOption = {},
             onRefresh = {},
@@ -289,7 +285,11 @@ private fun LandscapePreview() {
 private fun LoadingPreview() {
     ApodTheme {
         AstronomyPicturesScreen(
-            uiState = AstronomyPicturesUiState.Loading,
+            uiState = AstronomyPicturesUiState.Data(
+                previewList = persistentListOf(),
+                sortOrderRes = R.string.date,
+                isRefreshing = true
+            ),
             onChangeSortOption = {},
             onRefresh = {},
             onPreviewClicked = {}

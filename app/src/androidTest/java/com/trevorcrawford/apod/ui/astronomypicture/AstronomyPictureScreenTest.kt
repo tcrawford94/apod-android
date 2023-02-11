@@ -47,9 +47,9 @@ class AstronomyPictureScreenTest {
         val longDateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)
         // Verify titles should be shown in rows
         TEST_DATA.forEach {
-            composeTestRule.onNodeWithText(it.title, substring = true).assertExists()
+            composeTestRule.onNodeWithText(it.title).assertExists()
             composeTestRule.onNodeWithText(it.copyright, substring = true).assertExists()
-            composeTestRule.onNodeWithText(longDateFormatter.format(it.date), substring = true)
+            composeTestRule.onNodeWithText(longDateFormatter.format(it.date))
                 .assertExists()
         }
     }

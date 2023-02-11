@@ -1,5 +1,6 @@
 package com.trevorcrawford.apod.ui
 
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -48,11 +49,14 @@ class NavigationTest {
     fun main_activity_clicking_apod_row_launches_to_astronomy_picture_detail_screen() {
         // When an astronomy picture row is selected
         val selectedPic = fakeAstronomyPictures[0]
-        composeTestRule.onNodeWithText(selectedPic.title, substring = true).performClick()
+        composeTestRule.onNodeWithText(selectedPic.title, substring = true)
+            .assertIsDisplayed()
+            .performClick()
 
         // Verify that the correct astronomy picture detail screen is shown...
-        composeTestRule.onNodeWithText(selectedPic.title, substring = true).assertExists()
-        composeTestRule.onNodeWithText(selectedPic.explanation, substring = true).assertExists()
+        composeTestRule.onNodeWithText(selectedPic.copyright, substring = true).assertExists()
+        composeTestRule.onNodeWithText(selectedPic.title).assertExists()
+        composeTestRule.onNodeWithText(selectedPic.explanation).assertExists()
 
         // And that different picture info isn't displayed
         composeTestRule.onNodeWithText(fakeAstronomyPictures[1].title, substring = true)

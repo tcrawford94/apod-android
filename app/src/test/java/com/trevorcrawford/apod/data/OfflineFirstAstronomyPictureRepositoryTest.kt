@@ -9,9 +9,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -109,32 +106,6 @@ class OfflineFirstAstronomyPictureRepositoryTest {
     }
 
     @Test
-    fun repository_load_pictures_updates_refreshing_pictures() = runTest {
-        // Given FakeNetworkWithResult
-        val astronomyPictureDao = FakeAstronomyPictureDao()
-        val networkDataSource = FakeNetworkWithResult()
-        val repository = OfflineFirstAstronomyPictureRepository(
-            astronomyPictureDao = astronomyPictureDao,
-            network = networkDataSource
-        )
-        val isRefreshingPicturesValues = mutableListOf<Boolean>()
-        val collectJob = launch(UnconfinedTestDispatcher(testScheduler)) {
-            repository.isRefreshingPictures.toList(isRefreshingPicturesValues)
-        }
-
-        // When loadPictures
-        repository.loadPictures()
-
-        // Then
-        assertEquals(
-            listOf(false, true, false),
-            isRefreshingPicturesValues
-        )
-
-        collectJob.cancel()
-    }
-
-    @Test
     fun repository_astronomy_picture_detail_returns_astronomy_picture_from_dao_if_exists() =
         runTest {
             // Given FakeNetworkWithResult
@@ -160,36 +131,6 @@ class OfflineFirstAstronomyPictureRepositoryTest {
                     repository.getPictureDetail(localDate).first()
                 )
             }
-        }
-
-    @Test
-    fun repository_failed_load_pictures_updates_refreshing_pictures_and_is_failure_result() =
-        runTest {
-            // Given FakeNetworkWithResult
-            val astronomyPictureDao = FakeAstronomyPictureDao()
-            val networkDataSource = FakeNetworkWithFailureResult()
-            val repository = OfflineFirstAstronomyPictureRepository(
-                astronomyPictureDao = astronomyPictureDao,
-                network = networkDataSource
-            )
-            val isRefreshingPicturesValues = mutableListOf<Boolean>()
-            val collectJob = launch(UnconfinedTestDispatcher(testScheduler)) {
-                repository.isRefreshingPictures.toList(isRefreshingPicturesValues)
-            }
-
-            // When loadPictures
-            val loadPicturesResult = repository.loadPictures()
-
-            // Then
-            assertEquals(
-                listOf(false, true, false),
-                isRefreshingPicturesValues
-            )
-            assertEquals(
-                true,
-                loadPicturesResult.isFailure
-            )
-            collectJob.cancel()
         }
 }
 
@@ -222,11 +163,6 @@ private class FakeNetworkWithResult : PlanetaryNetworkDataSource {
 private class FakeNetworkWithEmptyResult : PlanetaryNetworkDataSource {
     override suspend fun getPictures(): Result<List<NetworkAstronomyResource>> =
         Result.success(listOf())
-}
-
-private class FakeNetworkWithFailureResult : PlanetaryNetworkDataSource {
-    override suspend fun getPictures(): Result<List<NetworkAstronomyResource>> =
-        Result.failure(Exception("Network Failure"))
 }
 
 private val fakeNetworkAstronomyResources = listOf(
