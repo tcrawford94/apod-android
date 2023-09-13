@@ -1,5 +1,5 @@
 # APOD Explorer App (apod-android)
-Android App for exploring NASA's "Astronomy Picture of the Day" API. The main inspiration was to have a learning exercise and fun project for me to work on. I hope to release to the Play Store at some point down the road, just because it'd be cool, but I don't plan to make any money off this (e.g. ads).
+Android App for exploring NASA's "Astronomy Picture of the Day" API.
 
 # Architecture
   - Following [Android Architecture Recommendations](https://developer.android.com/topic/architecture/recommendations)
